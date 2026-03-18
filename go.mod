@@ -5,6 +5,7 @@ go 1.25.8
 require (
 	github.com/eiannone/keyboard v0.0.0-20220611211555-0d226195f203
 	github.com/tiagomelo/go-ocr v0.1.0
+	gocv.io/x/gocv v0.43.0
 )
 
 require (
