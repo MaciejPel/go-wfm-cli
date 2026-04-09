@@ -7,13 +7,14 @@ import (
 	"os"
 	"strings"
 
+	"github.com/MaciejPel/go-wfm-cli/pkg/wfdata"
 	"github.com/eiannone/keyboard"
 	"github.com/tiagomelo/go-ocr/ocr"
 	"gocv.io/x/gocv"
 )
 
 const tesseractPath = "C:\\Program Files\\Tesseract-OCR\\tesseract.exe"
-const imagePath = "C:\\Users\\admin\\Desktop\\Untitled0.png"
+const imagePath = "C:\\Users\\admin\\Desktop\\Untitled4.png"
 
 func main() {
 	err := keyboard.Open()
@@ -35,7 +36,7 @@ func main() {
 	gocv.CvtColor(cropped, &gray, gocv.ColorBGRToGray)
 	bw := gocv.NewMat()
 	defer bw.Close()
-	gocv.Threshold(gray, &bw, 0, 255, gocv.ThresholdBinary|gocv.ThresholdOtsu)
+	gocv.Threshold(gray, &bw, 0, 255, gocv.ThresholdBinaryInv|gocv.ThresholdOtsu)
 	gocv.IMWrite("output.jpg", bw)
 
 	fmt.Println("Listening...")
@@ -47,6 +48,10 @@ func main() {
 
 		if key == keyboard.KeyEsc || key == keyboard.KeyCtrlC || char == 'q' {
 			break
+		}
+
+		if char == 'w' {
+			wfdata.Fetch()
 		}
 
 		if char == 's' {
@@ -67,7 +72,6 @@ func main() {
 				fmt.Println(idx, val)
 			}
 		}
-
 	}
 
 }
