@@ -51,7 +51,11 @@ func main() {
 		}
 
 		if char == 'w' {
-			wfdata.Fetch()
+			valid, err := wfdata.GetWarframeData(true)
+			if err != nil {
+				log.Fatal(err)
+			}
+			fmt.Println(valid)
 		}
 
 		if char == 's' {
