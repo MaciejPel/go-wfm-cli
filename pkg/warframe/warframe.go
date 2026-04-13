@@ -1,4 +1,4 @@
-package wfdata
+package warframe
 
 import (
 	"bytes"
@@ -9,8 +9,9 @@ import (
 	"regexp"
 	"slices"
 	"strings"
-	"unicode"
 
+	"github.com/MaciejPel/go-wfm-cli/pkg/text"
+	"github.com/MaciejPel/go-wfm-cli/pkg/utils"
 	"github.com/ulikunitz/xz/lzma"
 )
 
@@ -19,18 +20,18 @@ const manifestURL = "https://content.warframe.com/PublicExport/Manifest/"
 
 var cacheFilePath = os.TempDir() + "/wfdata-cache.txt"
 
-var KubrowItems = map[string]string{
+var kubrowItems = map[string]string{
 	"PrimeKubrowCollarABuckleComponent": "Kavasa Prime Buckle",
 	"PrimeKubrowCollarABlueprint":       "Kavasa Prime Kubrow Collar Blueprint",
 	"PrimeKubrowCollarABandComponent":   "Kavasa Prime Band",
 }
-var ArchwingItems = map[string]string{
+var archwingItems = map[string]string{
 	"PrimeArchwingBlueprint":        "Odonata Prime Blueprint",
 	"PrimeArchwingSystemsBlueprint": "Odonata Prime Systems Blueprint",
 	"PrimeArchwingChassisBlueprint": "Odonata Prime Chassis Blueprint",
 	"PrimeArchwingWingsBlueprint":   "Odonata Prime Wings Blueprint",
 }
-var ImmortalMods = map[string]string{
+var immortalMods = map[string]string{
 	"ImmortalOneMod":   "Lohk",
 	"ImmortalTwoMod":   "Xata",
 	"ImmortalThreeMod": "Jahu",
@@ -61,7 +62,7 @@ type Reward struct {
 	Name string `json:"rewardName"`
 }
 
-func GetWarframeData(useCache bool) ([]string, error) {
+func GetData(useCache bool) ([]string, error) {
 	valid := []string{}
 
 	if useCache {
@@ -161,50 +162,29 @@ func GetWarframeData(useCache bool) ([]string, error) {
 
 		if slices.Contains(rewardSplit, "WarframeRecipes") {
 			if strings.HasSuffix(reward, "PrimeBlueprint") {
-				valid = append(valid, separateByUppercase(lastItem))
+				valid = append(valid, text.SeparateByUppercase(lastItem))
 			} else {
-				valid = append(valid, strings.ReplaceAll(separateByUppercase(lastItem), "Helmet", "Neuroptics"))
+				valid = append(valid, strings.ReplaceAll(text.SeparateByUppercase(lastItem), "Helmet", "Neuroptics"))
 			}
 		} else if slices.Contains(rewardSplit, "SentinelRecipes") {
 			re := regexp.MustCompile(`Prime|Sentinel|Blueprint`)
 			sentinel := re.ReplaceAllString(lastItem, "")
 			valid = append(valid, sentinel+" Prime Blueprint")
 		} else if slices.Contains(rewardSplit, "Kubrow") {
-			valid = append(valid, KubrowItems[lastItem])
+			valid = append(valid, kubrowItems[lastItem])
 		} else if slices.Contains(rewardSplit, "ArchwingRecipes") {
-			valid = append(valid, ArchwingItems[lastItem])
+			valid = append(valid, archwingItems[lastItem])
 		} else if slices.Contains(rewardSplit, "Immortal") {
-			valid = append(valid, ImmortalMods[lastItem])
+			valid = append(valid, immortalMods[lastItem])
 		} else if slices.Contains(rewardSplit, "WeaponParts") {
 			weaponKey := strings.ReplaceAll(reward, "/StoreItems", "")
 			valid = append(valid, resources[weaponKey])
 		} else if slices.Contains(rewardSplit, "Weapons") {
-			valid = append(valid, separateByUppercase(lastItem))
+			valid = append(valid, text.SeparateByUppercase(lastItem))
 		}
 	}
 
-	saveStringToFile(cacheFilePath, strings.Join(valid, "\n"))
+	utils.SaveStringToFile(cacheFilePath, strings.Join(valid, "\n"))
 
 	return valid, nil
-}
-
-func saveStringToFile(path string, data string) {
-	file, err := os.Create(path)
-	if err != nil {
-		return
-	}
-	defer file.Close()
-	file.WriteString(data)
-}
-
-func separateByUppercase(input string) string {
-	var out strings.Builder
-	for i, v := range input {
-		if unicode.IsUpper(v) && i > 0 {
-			out.WriteString(" " + string(v))
-		} else {
-			out.WriteString(string(v))
-		}
-	}
-	return out.String()
 }
