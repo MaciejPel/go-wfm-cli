@@ -11,18 +11,18 @@ func normalize(input string) string {
 	return strings.ToLower(strings.ReplaceAll(input, " ", ""))
 }
 
-func similarity(a, b string) int {
+func similarity(a, b string) float64 {
 	aNorm := normalize(a)
 	bNorm := normalize(b)
 	dist := levenshtein.DistanceForStrings([]rune(aNorm), []rune(bNorm), levenshtein.DefaultOptions)
 	maxLen := max(len(aNorm), len(bNorm))
 
-	return maxLen - dist
+	return float64(1) - float64(dist)/float64(maxLen)
 }
 
 func BestMatch(input string, candidates []string) string {
 	result := ""
-	score := -1
+	score := -1.0
 
 	for _, c := range candidates {
 		s := similarity(input, c)

@@ -10,37 +10,11 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/MaciejPel/go-wfm-cli/pkg/constants"
 	"github.com/MaciejPel/go-wfm-cli/pkg/text"
 	"github.com/MaciejPel/go-wfm-cli/pkg/utils"
 	"github.com/ulikunitz/xz/lzma"
 )
-
-const indexURL = "https://origin.warframe.com/PublicExport/index_en.txt.lzma"
-const manifestURL = "https://content.warframe.com/PublicExport/Manifest/"
-
-var cacheFilePath = os.TempDir() + "/wfdata-cache.txt"
-
-var kubrowItems = map[string]string{
-	"PrimeKubrowCollarABuckleComponent": "Kavasa Prime Buckle",
-	"PrimeKubrowCollarABlueprint":       "Kavasa Prime Kubrow Collar Blueprint",
-	"PrimeKubrowCollarABandComponent":   "Kavasa Prime Band",
-}
-var archwingItems = map[string]string{
-	"PrimeArchwingBlueprint":        "Odonata Prime Blueprint",
-	"PrimeArchwingSystemsBlueprint": "Odonata Prime Systems Blueprint",
-	"PrimeArchwingChassisBlueprint": "Odonata Prime Chassis Blueprint",
-	"PrimeArchwingWingsBlueprint":   "Odonata Prime Wings Blueprint",
-}
-var immortalMods = map[string]string{
-	"ImmortalOneMod":   "Lohk",
-	"ImmortalTwoMod":   "Xata",
-	"ImmortalThreeMod": "Jahu",
-	"ImmortalFourMod":  "Vome",
-	"ImmortalFiveMod":  "Ris",
-	"ImmortalSixMod":   "Fass",
-	"ImmortalSevenMod": "Netra",
-	"ImmortalEightMod": "Khra",
-}
 
 type Resources struct {
 	Resources []Resource `json:"ExportResources"`
@@ -66,8 +40,8 @@ func GetData(useCache bool) ([]string, error) {
 	valid := []string{}
 
 	if useCache {
-		if _, err := os.Stat(cacheFilePath); err == nil {
-			content, err := os.ReadFile(cacheFilePath)
+		if _, err := os.Stat(constants.CacheFilePath); err == nil {
+			content, err := os.ReadFile(constants.CacheFilePath)
 			if err != nil {
 				return valid, nil
 			}
@@ -78,7 +52,7 @@ func GetData(useCache bool) ([]string, error) {
 		}
 	}
 
-	resp, err := http.Get(indexURL)
+	resp, err := http.Get(constants.WfIndexURL)
 	if err != nil {
 		return valid, err
 	}
@@ -113,7 +87,7 @@ func GetData(useCache bool) ([]string, error) {
 			continue
 		}
 
-		resp, err := http.Get(manifestURL + line)
+		resp, err := http.Get(constants.WfManifestURL + line)
 		if err != nil {
 			return valid, err
 		}
@@ -171,11 +145,11 @@ func GetData(useCache bool) ([]string, error) {
 			sentinel := re.ReplaceAllString(lastItem, "")
 			valid = append(valid, sentinel+" Prime Blueprint")
 		} else if slices.Contains(rewardSplit, "Kubrow") {
-			valid = append(valid, kubrowItems[lastItem])
+			valid = append(valid, constants.KubrowItems[lastItem])
 		} else if slices.Contains(rewardSplit, "ArchwingRecipes") {
-			valid = append(valid, archwingItems[lastItem])
+			valid = append(valid, constants.ArchwingItems[lastItem])
 		} else if slices.Contains(rewardSplit, "Immortal") {
-			valid = append(valid, immortalMods[lastItem])
+			valid = append(valid, constants.ImmortalMods[lastItem])
 		} else if slices.Contains(rewardSplit, "WeaponParts") {
 			weaponKey := strings.ReplaceAll(reward, "/StoreItems", "")
 			valid = append(valid, resources[weaponKey])
@@ -184,7 +158,8 @@ func GetData(useCache bool) ([]string, error) {
 		}
 	}
 
-	utils.SaveStringToFile(cacheFilePath, strings.Join(valid, "\n"))
+	valid = append(valid, "Forma Blueprint")
+	utils.SaveStringToFile(constants.CacheFilePath, strings.Join(valid, "\n"))
 
 	return valid, nil
 }
