@@ -35,9 +35,9 @@ func BestMatch(input string, candidates []string) string {
 	return result
 }
 
-func SeparateByUppercase(input string) string {
+func SeparateByUppercase(in string) string {
 	var out strings.Builder
-	for i, v := range input {
+	for i, v := range in {
 		if unicode.IsUpper(v) && i > 0 {
 			out.WriteString(" " + string(v))
 		} else {
@@ -45,4 +45,8 @@ func SeparateByUppercase(input string) string {
 		}
 	}
 	return out.String()
+}
+
+func ItemCamelToSnake(in string) string {
+	return strings.ReplaceAll(strings.ToLower(in), " ", "_")
 }

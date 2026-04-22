@@ -1,7 +1,9 @@
 package utils
 
 import (
+	"fmt"
 	"os"
+	"os/exec"
 )
 
 func SaveStringToFile(path string, data string) {
@@ -11,4 +13,11 @@ func SaveStringToFile(path string, data string) {
 	}
 	defer file.Close()
 	file.WriteString(data)
+}
+
+func ClearScreen() {
+	cmd := exec.Command("cmd", "/c", "cls")
+	cmd.Stdout = os.Stdout
+	cmd.Run()
+	fmt.Println("Listening...")
 }

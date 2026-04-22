@@ -11,7 +11,9 @@ import (
 	"strings"
 
 	"github.com/MaciejPel/go-wfm-cli/pkg/constants"
+	"github.com/MaciejPel/go-wfm-cli/pkg/market"
 	"github.com/MaciejPel/go-wfm-cli/pkg/text"
+	"github.com/MaciejPel/go-wfm-cli/pkg/utils"
 	"github.com/MaciejPel/go-wfm-cli/pkg/warframe"
 	"github.com/eiannone/keyboard"
 	"github.com/kbinani/screenshot"
@@ -31,7 +33,8 @@ func main() {
 	}
 	defer keyboard.Close()
 
-	fmt.Println("Listening...")
+	utils.ClearScreen()
+
 	for {
 		char, key, err := keyboard.GetKey()
 		if err != nil {
@@ -39,6 +42,7 @@ func main() {
 		}
 
 		if key == keyboard.KeyEsc || key == keyboard.KeyCtrlC || char == 'q' {
+			fmt.Println("Bye!")
 			break
 		}
 
@@ -47,9 +51,16 @@ func main() {
 			if err != nil {
 				log.Fatal(err)
 			}
+			fmt.Println("Item data updated")
+		}
+
+		if char == 'c' {
+			utils.ClearScreen()
 		}
 
 		if char == 's' {
+			utils.ClearScreen()
+
 			bounds := screenshot.GetDisplayBounds(0)
 			imga, err := screenshot.CaptureRect(bounds)
 			if err != nil {
@@ -66,6 +77,7 @@ func main() {
 			}
 			defer img.Close()
 
+			fmt.Printf("%-40s - %3s %5s\n", "Item", "min", "avg")
 			for i, e := range constants.CropRegions[4] {
 				cropImgPath := os.TempDir() + "/wf-data-tmp-img-crop-" + strconv.Itoa(i) + ".jpg"
 				rect := image.Rect(e[0], e[1], e[2], e[3])
@@ -93,7 +105,16 @@ func main() {
 
 				re := regexp.MustCompile(`[^a-zA-Z]+`)
 				result := re.ReplaceAllString(strings.ReplaceAll(extractedText, "\r\n", ""), "")
-				fmt.Println(text.BestMatch(result, validEntries))
+				bestMatch := text.BestMatch(result, validEntries)
+				if bestMatch == "Forma Blueprint" {
+					fmt.Println(bestMatch)
+					continue
+				}
+				out, err := market.FetchItem(text.ItemCamelToSnake(bestMatch))
+				if err != nil {
+					log.Fatal(err)
+				}
+				fmt.Printf("%-40s - %3d %5.2f\n", bestMatch, out.Min, out.Avg)
 			}
 		}
 	}
