@@ -22,8 +22,6 @@ github.com/texttheater/golang-levenshtein/levenshtein v0.0.0-20200805054039-cae8
 github.com/texttheater/golang-levenshtein/levenshtein v0.0.0-20200805054039-cae8b0eaed6c/go.mod h1:JlzghshsemAMDGZLytTFY8C1JQxQPhnatWqNwUXjggo=
 github.com/tiagomelo/go-ocr v0.1.0 h1:okJKqGdPtxyA6Ds7fBDDzHdCj0xJaL/SPP3bCk0YkK0=
 github.com/tiagomelo/go-ocr v0.1.0/go.mod h1:PrWIC/D80dNNDxTkHMQQJYvPmojay/w7k9xEQaULsjU=
-github.com/ulikunitz/xz v0.5.15 h1:9DNdB5s+SgV3bQ2ApL10xRc35ck0DuIX/isZvIk+ubY=
-github.com/ulikunitz/xz v0.5.15/go.mod h1:nbz6k7qbPmH4IRqmfOplQw/tblSgqTqBwxkY0oWt/14=
 gocv.io/x/gocv v0.43.0 h1:PFNpRUcV8fgBRDbVHHN+4BDZjjPnVveo5N/+e15BTuA=
 gocv.io/x/gocv v0.43.0/go.mod h1:zYdWMj29WAEznM3Y8NsU3A0TRq/wR/cy75jeUypThqU=
 golang.org/x/sys v0.0.0-20201018230417-eeed37f84f13/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=

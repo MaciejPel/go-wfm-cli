@@ -14,7 +14,6 @@ import (
 	"github.com/MaciejPel/go-wfm-cli/pkg/market"
 	"github.com/MaciejPel/go-wfm-cli/pkg/text"
 	"github.com/MaciejPel/go-wfm-cli/pkg/utils"
-	"github.com/MaciejPel/go-wfm-cli/pkg/warframe"
 	"github.com/eiannone/keyboard"
 	"github.com/kbinani/screenshot"
 	"github.com/tiagomelo/go-ocr/ocr"
@@ -22,7 +21,7 @@ import (
 )
 
 func main() {
-	validEntries, fetchErr := warframe.GetData(true)
+	validEntries, fetchErr := market.FetchRelicItems(true)
 	if fetchErr != nil {
 		log.Fatal(fetchErr)
 	}
@@ -47,7 +46,7 @@ func main() {
 		}
 
 		if char == 'u' {
-			validEntries, err = warframe.GetData(false)
+			validEntries, err = market.FetchRelicItems(false)
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -62,26 +61,26 @@ func main() {
 			utils.ClearScreen()
 
 			bounds := screenshot.GetDisplayBounds(0)
-			imga, err := screenshot.CaptureRect(bounds)
+			screenshot_img, err := screenshot.CaptureRect(bounds)
 			if err != nil {
 				panic(err)
 			}
 			file, _ := os.Create(constants.TmpImgPath)
 			defer file.Close()
-			png.Encode(file, imga)
+			png.Encode(file, screenshot_img)
 
-			img := gocv.IMRead(constants.TmpImgPath, gocv.IMReadColor)
+			cv_img := gocv.IMRead(constants.TmpImgPath, gocv.IMReadColor)
 			// pixel := img.GetVecbAt(115, 350)
-			if img.Empty() {
+			if cv_img.Empty() {
 				panic("Cannot read image")
 			}
-			defer img.Close()
+			defer cv_img.Close()
 
 			fmt.Printf("%-40s - %3s %5s\n", "Item", "min", "avg")
 			for i, e := range constants.CropRegions[4] {
 				cropImgPath := os.TempDir() + "/wf-data-tmp-img-crop-" + strconv.Itoa(i) + ".jpg"
 				rect := image.Rect(e[0], e[1], e[2], e[3])
-				cropped := img.Region(rect)
+				cropped := cv_img.Region(rect)
 				defer cropped.Close()
 				gray := gocv.NewMat()
 				defer gray.Close()
