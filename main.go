@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"image"
-	"image/png"
 	"log"
 	"os"
 	"regexp"
@@ -11,26 +10,32 @@ import (
 	"strings"
 
 	"github.com/MaciejPel/go-wfm-cli/pkg/constants"
+	"github.com/MaciejPel/go-wfm-cli/pkg/imageutil"
 	"github.com/MaciejPel/go-wfm-cli/pkg/market"
 	"github.com/MaciejPel/go-wfm-cli/pkg/text"
 	"github.com/MaciejPel/go-wfm-cli/pkg/utils"
 	"github.com/eiannone/keyboard"
 	"github.com/kbinani/screenshot"
 	"github.com/tiagomelo/go-ocr/ocr"
-	"gocv.io/x/gocv"
 )
 
 func main() {
-	validEntries, fetchErr := market.FetchRelicItems(true)
-	if fetchErr != nil {
-		log.Fatal(fetchErr)
+	validEntries, err := market.FetchRelicItems(true)
+	if err != nil {
+		log.Fatal(err)
 	}
 
-	err := keyboard.Open()
+	err = keyboard.Open()
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer keyboard.Close()
+
+	t, err := ocr.New(ocr.TesseractPath(constants.TesseractPath))
+	if err != nil {
+		log.Fatal(err)
+		os.Exit(1)
+	}
 
 	utils.ClearScreen()
 
@@ -61,44 +66,37 @@ func main() {
 			utils.ClearScreen()
 
 			bounds := screenshot.GetDisplayBounds(0)
-			screenshot_img, err := screenshot.CaptureRect(bounds)
+			screenshotImg, err := screenshot.CaptureRect(bounds)
+			err = imageutil.SavePNG(constants.TmpImgPath, screenshotImg)
 			if err != nil {
 				panic(err)
 			}
-			file, _ := os.Create(constants.TmpImgPath)
-			defer file.Close()
-			png.Encode(file, screenshot_img)
 
-			cv_img := gocv.IMRead(constants.TmpImgPath, gocv.IMReadColor)
-			// pixel := img.GetVecbAt(115, 350)
-			if cv_img.Empty() {
-				panic("Cannot read image")
+			img, err := imageutil.Load(constants.TmpImgPath)
+			if err != nil {
+				panic(err)
 			}
-			defer cv_img.Close()
 
-			fmt.Printf("%-40s - %3s %5s\n", "Item", "min", "avg")
-			for i, e := range constants.CropRegions[4] {
-				cropImgPath := os.TempDir() + "/wf-data-tmp-img-crop-" + strconv.Itoa(i) + ".jpg"
-				rect := image.Rect(e[0], e[1], e[2], e[3])
-				cropped := cv_img.Region(rect)
-				defer cropped.Close()
-				gray := gocv.NewMat()
-				defer gray.Close()
-				gocv.CvtColor(cropped, &gray, gocv.ColorBGRToGray)
-				bw := gocv.NewMat()
-				defer bw.Close()
-				gocv.Threshold(gray, &bw, 0, 255, gocv.ThresholdBinaryInv|gocv.ThresholdOtsu)
-				gocv.IMWrite(cropImgPath, bw)
+			fmt.Printf("%-40s - %4s %6s\n", "Item", "min", "avg")
+			playerCount := 4
+			for i := range playerCount {
+				cropImgPath := os.TempDir() + "/wf-data-tmp-img-crop-" + strconv.Itoa(i) + ".png"
+				boxTextXStart := constants.BoxCropXStart[playerCount] + i*constants.BoxGapWidth + i*constants.BoxWidth
+				rect := image.Rect(boxTextXStart, constants.BoxTextYStart, boxTextXStart+constants.BoxWidth, constants.BoxTextYEnd)
 
-				t, err := ocr.New(ocr.TesseractPath(constants.TesseractPath))
+				cropped := imageutil.Crop(img, rect)
+				gray := imageutil.ApplyGrayscale(cropped)
+				otsu := imageutil.ApplyOtsuThreshold(gray)
+				binaryInv := imageutil.ApplyThresholdBinaryInv(gray, otsu)
+
+				err = imageutil.SavePNG(cropImgPath, binaryInv)
 				if err != nil {
-					fmt.Println(err)
-					os.Exit(1)
+					panic(err)
 				}
 
 				extractedText, err := t.TextFromImageFile(cropImgPath)
 				if err != nil {
-					fmt.Println(err)
+					log.Fatal(err)
 					os.Exit(1)
 				}
 
@@ -113,9 +111,10 @@ func main() {
 				if err != nil {
 					log.Fatal(err)
 				}
-				fmt.Printf("%-40s - %3d %5.2f\n", bestMatch, out.Min, out.Avg)
+				fmt.Printf("%-40s - %4d %6.2f\n", bestMatch, out.Min, out.Avg)
 			}
 		}
 	}
 
+	os.Exit(0)
 }

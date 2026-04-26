@@ -7,7 +7,6 @@ require (
 	github.com/kbinani/screenshot v0.0.0-20250624051815-089614a94018
 	github.com/texttheater/golang-levenshtein/levenshtein v0.0.0-20200805054039-cae8b0eaed6c
 	github.com/tiagomelo/go-ocr v0.1.0
-	gocv.io/x/gocv v0.43.0
 )
 
 require (

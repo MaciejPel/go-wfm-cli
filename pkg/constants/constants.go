@@ -9,11 +9,14 @@ const WfManifestURL = "https://content.warframe.com/PublicExport/Manifest/"
 var CacheFilePath = os.TempDir() + "/wfdata-cache.txt"
 var TmpImgPath = os.TempDir() + "/wf-data-tmp-img.png"
 
-var CropRegions = map[int][][]int{
-	4: [][]int{
-		{638, 551, 951, 612},
-		{961, 551, 1274, 612},
-		{1284, 551, 1597, 612},
-		{1607, 551, 1921, 612},
-	},
+const BoxWidth = 313
+const BoxGapWidth = 10
+const BoxTextYStart = 551
+const BoxTextYEnd = 612
+
+var BoxCropXStart = map[int]int{
+	1: 1123,
+	2: 961,
+	3: 800,
+	4: 638,
 }
