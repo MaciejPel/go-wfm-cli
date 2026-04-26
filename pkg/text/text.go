@@ -47,6 +47,6 @@ func SeparateByUppercase(in string) string {
 	return out.String()
 }
 
-func ItemCamelToSnake(in string) string {
-	return strings.ReplaceAll(strings.ToLower(in), " ", "_")
+func ItemNameToSlug(in string) string {
+	return strings.ReplaceAll(strings.ReplaceAll(strings.ToLower(in), " ", "_"), "&", "and")
 }

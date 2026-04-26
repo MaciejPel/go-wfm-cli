@@ -109,7 +109,7 @@ func main() {
 					fmt.Println(bestMatch)
 					continue
 				}
-				out, err := market.FetchItem(text.ItemCamelToSnake(bestMatch))
+				out, err := market.FetchItem(text.ItemNameToSlug(bestMatch))
 				if err != nil {
 					log.Fatal(err)
 				}
