@@ -2,11 +2,13 @@ package market
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"math"
 	"net/http"
 	"os"
 	"slices"
+	"strconv"
 	"strings"
 
 	"github.com/MaciejPel/go-wfm-cli/pkg/constants"
@@ -69,6 +71,11 @@ type RelicItemsResponse struct {
 	Error      string     `json:"error"`
 }
 
+type ItemValue struct {
+	Name   string
+	Ducats int32
+}
+
 func FetchItem(itemName string) (ItemPricing, error) {
 	resp, err := http.Get(apiBase + "/orders/item/" + itemName + "/top")
 	if err != nil {
@@ -101,12 +108,13 @@ func FetchItem(itemName string) (ItemPricing, error) {
 			Amt: optionsLen,
 			Avg: avg(&options),
 			Min: min(&options),
-			Max: max(&options)},
+			Max: max(&options),
+		},
 		err
 }
 
-func FetchRelicItems(useCache bool) ([]string, error) {
-	valid := []string{}
+func FetchRelicItems(useCache bool) ([]ItemValue, error) {
+	valid := []ItemValue{}
 
 	if useCache {
 		if _, err := os.Stat(constants.CacheFilePath); err == nil {
@@ -114,7 +122,17 @@ func FetchRelicItems(useCache bool) ([]string, error) {
 			if err != nil {
 				return valid, nil
 			}
-			valid = strings.Split(string(content), "\n")
+			for line := range strings.SplitSeq(string(content), "\n") {
+				values := strings.Split(line, ";")
+				ducats := 0
+				if len(values) > 1 {
+					parsed, err := strconv.Atoi(values[1])
+					if err == nil {
+						ducats = parsed
+					}
+				}
+				valid = append(valid, ItemValue{Name: values[0], Ducats: int32(ducats)})
+			}
 			if len(valid) > 500 {
 				return valid, nil
 			}
@@ -123,19 +141,19 @@ func FetchRelicItems(useCache bool) ([]string, error) {
 
 	resp, err := http.Get(apiBase + "/items")
 	if err != nil {
-		return []string{}, err
+		return []ItemValue{}, err
 	}
 	defer resp.Body.Close()
 
 	data, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return []string{}, err
+		return []ItemValue{}, err
 	}
 
 	var relicItemsResponse RelicItemsResponse
 	err = json.Unmarshal(data, &relicItemsResponse)
 	if err != nil {
-		return []string{}, err
+		return []ItemValue{}, err
 	}
 
 	for _, r := range relicItemsResponse.Data {
@@ -148,12 +166,19 @@ func FetchRelicItems(useCache bool) ([]string, error) {
 		immortalMod := strings.Contains(gameRef, "/Immortal/Immortal") && !strings.Contains(gameRef, "Wildcard")
 
 		if (ducats > 0 && !set) || immortalMod {
-			valid = append(valid, name)
+			valid = append(valid, ItemValue{Name: name, Ducats: ducats})
 		}
 	}
 
-	valid = append(valid, "Forma Blueprint")
-	utils.SaveStringToFile(constants.CacheFilePath, strings.Join(valid, "\n"))
+	valid = append(valid,
+		ItemValue{Name: "Forma Blueprint", Ducats: 0},
+		ItemValue{Name: "2 X Forma Blueprint", Ducats: 0},
+		ItemValue{Name: "Riven Silver", Ducats: 0},
+		ItemValue{Name: "1,200 X Kuva", Ducats: 0},
+		ItemValue{Name: "Ayatan Amber Star", Ducats: 0},
+		ItemValue{Name: "Exilus Weapon Adapter Blueprint", Ducats: 0},
+	)
+	utils.SaveStringToFile(constants.CacheFilePath, formatItems(valid))
 
 	return valid, nil
 }
@@ -184,4 +209,17 @@ func avg(arr *[]int) float64 {
 		sum += i
 	}
 	return float64(sum) / float64(len(*arr))
+}
+
+func formatItems(items []ItemValue) string {
+	var out strings.Builder
+
+	for i, item := range items {
+		out.WriteString(item.Name + ";" + fmt.Sprintf("%d", item.Ducats))
+		if i < len(items)-1 {
+			out.WriteString("\n")
+		}
+	}
+
+	return out.String()
 }

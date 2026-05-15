@@ -4,6 +4,7 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/MaciejPel/go-wfm-cli/pkg/market"
 	"github.com/texttheater/golang-levenshtein/levenshtein"
 )
 
@@ -20,15 +21,15 @@ func similarity(a, b string) float64 {
 	return float64(1) - float64(dist)/float64(maxLen)
 }
 
-func BestMatch(input string, candidates []string) string {
-	result := ""
+func BestMatch(input string, candidates []market.ItemValue) market.ItemValue {
+	result := market.ItemValue{}
 	score := -1.0
 
-	for _, c := range candidates {
-		s := similarity(input, c)
+	for _, item := range candidates {
+		s := similarity(input, item.Name)
 		if s > score {
 			score = s
-			result = c
+			result = item
 		}
 	}
 
